@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👻 Specter Ghost Evidence Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .selection-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .clear-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: #dc2626;
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .evidence-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        }
+
+        .traits-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .checkbox-item.selected {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+        }
+
+        .trait-item {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trait-item:hover {
+            border-color: #8b5cf6;
+            background: #faf5ff;
+        }
+
+        .trait-item.selected {
+            border-color: #8b5cf6;
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .trait-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .trait-desc {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .results-summary {
+            background: #dbeafe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .ghost-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .ghost-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .ghost-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .ghost-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .ghost-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ghost-name {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .ghost-description {
+            color: #64748b;
+            margin-bottom: 16px;
+            line-height: 1.7;
+        }
+
+        .ghost-ability {
+            background: #fef3c7;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .ability-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 6px;
+        }
+
+        .ability-text {
+            color: #a16207;
+        }
+
+        .evidence-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .evidence-tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .evidence-tag.found {
+            background: #10b981;
+            color: white;
+        }
+
+        .evidence-tag.not-found {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .ghost-traits {
+            margin-top: 16px;
+        }
+
+        .trait-badge {
+            background: #f3e8ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+
+        .trait-badge.selected-trait {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .trait-badge-name {
+            font-weight: 600;
+            color: #7c3aed;
+            margin-bottom: 4px;
+        }
+
+        .trait-badge.selected-trait .trait-badge-name {
+            color: white;
+        }
+
+        .trait-badge-desc {
+            font-size: 0.9rem;
+            color: #6b46c1;
+        }
+
+        .trait-badge.selected-trait .trait-badge-desc {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 48px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .subsection-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .divider {
+            border-bottom: 1px solid #e5e7eb;
+            margin: 16px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👻 Specter Ghost Evidence Tracker</h1>
+            <p>Select evidence and traits to identify your ghost!</p>
+        </div>
+
+        <div class="selection-panel">
+            <!-- Evidence Selection -->
+            <div class="section-title">
+                Select Evidence Found:
+                <button class="clear-btn" onclick="clearEvidence()">Clear Evidence</button>
+            </div>
+            <div class="grid evidence-grid" id="evidenceGrid"></div>
+
+            <div class="divider"></div>
+
+            <!-- Traits Selection -->
+            <div class="section-title">
+                Select Traits Observed:
+                <button class="clear-btn" onclick="clearTraits()">Clear Traits</button>
+            </div>
+            <div class="grid traits-grid" id="traitsGrid"></div>
+
+            <div class="divider"></div>
+
+            <div style="display: flex; gap: 12px;">
+                <button class="clear-btn" onclick="clearAll()">Clear Everything</button>
+            </div>
+        </div>
+
+        <div class="results-summary" id="resultsSummary"></div>
+
+        <div class="ghost-grid" id="ghostGrid"></div>
+
+        <div class="no-results" id="noResults" style="display: none;">
+            <div class="no-results-icon">👻</div>
+            <h3>No ghosts found</h3>
+            <p>No ghosts match your selected criteria. Try removing some filters.</p>
+        </div>
+    </div>
+
+    <script>
+        // Evidence types
+        const evidenceTypes = [
+            'EMF 5',
+            'Paranormal Motion',
+            'Ghost Orbs',
+            'Freezing Temperatures',
+            'Fingerprints',
+            'Spirit Box',
+            'Ghost Writing'
+        ];
+
+        // Trait definitions
+        const traitDefinitions = {
+            'Flicker': 'Ghosts briefly turn invisible during hunts and may occasionally appear while wandering',
+            'Imitator': 'These ghosts are able to imitate players in the chat, and create fake footstep sounds',
+            'Leech': 'Ghosts consume the bodies of dead players. Sanity drains faster each time',
+            'Tormentor': 'Ghosts are able to create visual hallucinations of themselves to scare any nearby player',
+            'Trickster': 'Can throw equipment left on the ground, and temporarily disable nearby electronic equipment'
+        };
+
+        // Ghost data
+        const ghosts = [
+            {
+                name: 'Afarit',
+                description: 'Afarit originate in Islamic folklore, being compared to Jinn in religious texts. Looking at a hunting Afarit will cause it to speed up significantly.',
+                evidence: ['Paranormal Motion', 'Ghost Orbs', 'Freezing Temperatures'],
+                ability: 'Looking at an Afarit directly will cause it to speed up significantly.',
+                traits: ['Tormentor']
+            },
+            {
+                name: 'Aswang',
+                description: 'Aswang are spirits from the folklore of the Philippines. They prey on the weak, targeting those with the lowest sanity.',
+                evidence: ['EMF 5', 'Fingerprints', 'Spirit Box'],
+                ability: 'Targets the player with the lowest sanity.',
+                traits: ['Leech']
+            },
+            {
+                name: 'Banshee',
+                description: 'The Banshee is a dangerous ghost that will hunt its prey one at a time. Banshees are said to mourn the death of a family member, and some say they can be heard weeping, but there is no conclusive evidence behind that claim.',
+                evidence: ['EMF 5', 'Freezing Temperatures', 'Fingerprints'],
+                ability: 'Targets one player, even if others are closer.',
+                traits: ['Tormentor']
+            },
+            {
+                name: 'Bhuta',
+                description: 'The Bhuta is attracted to movement and electricity. If you are being chased, try standing still at a safe distance and don\'t equip any electronic equipment, including the headlight. In a few seconds it will stop targeting you, as long as there are other targets.',
+                evidence: ['Paranormal Motion', 'Ghost Writing', 'Freezing Temperatures'],
+                ability: 'If the player has no electronic equipment on them for more than 5 seconds, the will swap targets if more than one person is in a match.',
+                traits: ['Leech']
+            },
+            {
+                name: 'Demon',
+                description: 'The Demon is a violent ghost. They are known to attack more frequently than other types of ghosts, so keeping your sanity high is an important protection.',
+                evidence: ['Freezing Temperatures', 'Spirit Box', 'Ghost Writing'],
+                ability: 'Drains your sanity 5% faster, and hunts more frequently.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Douen',
+                description: 'Douen are mischevious ghosts known to play pranks on people. They are also said to lead children into the forest until they are lost. Douen are more likely to slam doors during hunts than other ghosts.',
+                evidence: ['Paranormal Motion', 'Ghost Writing', 'Fingerprints'],
+                ability: 'They can interact with doors from a farther distance, and closes/slams them more often',
+                traits: ['Trickster']
+            },
+            {
+                name: 'Egui',
+                description: 'Egui (餓鬼) has a literal translation of "hungry ghost". They will hunt for people who have a specific item in their inventory, seemingly random, even if their distance is farther than others.',
+                evidence: ['Ghost Orbs', 'Spirit Box', 'Ghost Writing'],
+                ability: 'If a player has it\'s favourite item, it becomes faster and starts targeting them. If the item gets dropped, the Egui will become slower and might switch targets.',
+                traits: ['Trickster']
+            },
+            {
+                name: 'Jinn',
+                description: 'A Jinn is a territorial ghost that will attack when threatened. It has also been known to travel at significant speed.',
+                evidence: ['EMF 5', 'Paranormal Motion', 'Ghost Orbs'],
+                ability: 'They become faster when the fuse box is off. If the fuse box is on, the closer the Jinn is to it\'s target, the slower it becomes.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Mare',
+                description: 'The Mare is the source of all nightmares, making it most powerful in the dark. Making sure the fuse box stays on is important to surviving mare hunts.',
+                evidence: ['Freezing Temperatures', 'Spirit Box', 'Ghost Orbs'],
+                ability: 'They become faster when the fuse box is turned off.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Mimic',
+                description: 'Be careful to not immediately assume the ghost type from the ability, or you may be tricked. The Mimic is able to imitate the abilities of any other ghost after 2 minutes. It will not stop imitating that ghost once chosen. It does not mimic evidence.',
+                evidence: ['Spirit Box', 'Ghost Writing', 'EMF 5'],
+                ability: 'After two minutes have passed, they can copy the abilities of one of the other twenty-five ghosts.',
+                traits: ['Imitator']
+            },
+            {
+                name: 'Myling',
+                description: 'The Myling is a Scandinavian spirit. They are said to be ghosts of unwanted children. They will only hunt one person if the fuse box is turned off, but will also become faster. When the fuse box is on, Mylings will target anyone nearby',
+                evidence: ['Paranormal Motion', 'EMF 5', 'Spirit Box'],
+                ability: 'They speed up and will target one player only when the fuse box is off.',
+                traits: ['Imitator']
+            },
+            {
+                name: 'O Tokata',
+                description: 'O Tokata are malevolent spirits in parts of traditional Indonesian mythology. Talking nearby a wandering O Tokata may cause it to hunt.',
+                evidence: ['EMF 5', 'Ghost Orbs', 'Fingerprints'],
+                ability: 'Talking in the chat near the O Tokata, during it\'s wandering state can cause it to begin a hunt.',
+                traits: ['Imitator']
+            },
+            {
+                name: 'Oni',
+                description: 'Oni love to scare their victims as much as possible before attacking. They are often seen in their physical form, guarding their place of death.',
+                evidence: ['Paranormal Motion', 'Ghost Writing', 'Spirit Box'],
+                ability: 'Give evidence 30% faster, but also causes non-evidence related paranormal activity 30% less.',
+                traits: ['Tormentor']
+            },
+            {
+                name: 'Phantom',
+                description: 'A Phantom is a ghost that can possess the living, inducing fear into those around it. They are most commonly summoned from Ouija Boards.',
+                evidence: ['Freezing Temperatures', 'EMF 5', 'Ghost Orbs'],
+                ability: 'Looking directly at Phantoms will drain your sanity faster.',
+                traits: ['Leech']
+            },
+            {
+                name: 'Poltergeist',
+                description: 'One of the most famous ghosts is the Poltergeist. Known to manipulate objects around it to spread fear into its victims.',
+                evidence: ['Spirit Box', 'Fingerprints', 'Ghost Orbs'],
+                ability: 'Farther range to interact with doors and objects. It is able to throw up to 3 objects at once, instead of the normal 2.',
+                traits: ['Trickster']
+            },
+            {
+                name: 'Preta',
+                description: 'Pretas are supernatural beings who cannot be put to rest. They suffer miserably and feed on the suffering of others. A preta will become slower the more of your team is dead.',
+                evidence: ['Paranormal Motion', 'Fingerprints', 'EMF 5'],
+                ability: 'Is faster when more players are alive.',
+                traits: ['Leech']
+            },
+            {
+                name: 'Revenant',
+                description: 'Revenants are violent ghosts that will attack indiscriminately. Their speed can be deceiving, as they are slow while dormant; however, as soon as they hunt they can move incredibly fast.',
+                evidence: ['EMF 5', 'Ghost Writing', 'Fingerprints'],
+                ability: 'Becomes faster when you get in their line of sight.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Shade',
+                description: 'The Shade is known to be very shy. There is evidence to suggest that a Shade will stop all paranormal activity if there are multiple people nearby.',
+                evidence: ['EMF 5', 'Ghost Writing', 'Ghost Orbs'],
+                ability: 'Does not create any evidence if a player is nearby.',
+                traits: ['Imitator']
+            },
+            {
+                name: 'Spirit',
+                description: 'Spirits are common and basic ghosts. They are very powerful, but passive, only attacking when they need to. They defend their place of death to the utmost degree, killing anyone that is caught overstaying their welcome.',
+                evidence: ['Fingerprints', 'Spirit Box', 'Ghost Writing'],
+                ability: 'Has no special abilities: does nothing.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Thayé',
+                description: 'Often said to take on a tall and lanky form, Thayé are intimidating but generally inactive ghosts. Their activity decreases over time, but their strength grows, so discovering evidence early is crucial.',
+                evidence: ['Freezing Temperatures', 'Fingerprints', 'Ghost Orbs'],
+                ability: 'They become faster and give less evidence the longer the round goes on.',
+                traits: ['Trickster']
+            },
+            {
+                name: 'Upyr',
+                description: 'The Upyr is documented in Slavic folklore, with the most modern comparison being a Vampire. Upyr rise from the grave if their soul has not been redeemed from their sins. They seek the blood of victims, becoming faster and more emboldened to hunt with each kill.',
+                evidence: ['EMF 5', 'Freezing Temperatures', 'Paranormal Motion'],
+                ability: 'They become faster and more likely to hunt with each kill.',
+                traits: ['Leech']
+            },
+            {
+                name: 'Wendigo',
+                description: 'The Wendigo is an evil spirit, documented in native folklore in North America. They\'re said to cause those under their influence to have an insatiable greed and hunger, sometimes for human lives. Wendigo become faster as your sanity drops.',
+                evidence: ['Paranormal Motion', 'Spirit Box', 'Freezing Temperatures'],
+                ability: 'Becomes faster the lower the average team sanity is.',
+                traits: ['Tormentor']
+            },
+            {
+                name: 'Wisp',
+                description: 'The Wisp can hunt faster in the light, and turns on lights more frequently than the other types of ghosts. They have been said to lure travelers away from their path during the night.',
+                evidence: ['Ghost Orbs', 'Ghost Writing', 'Fingerprints'],
+                ability: 'Becomes faster when they are targeting a player in a room with the lights turned on.',
+                traits: ['Flicker']
+            },
+            {
+                name: 'Wraith',
+                description: 'Wraith are very dangerous ghosts due to their ability to teleport freely. Wraith that chase one player for too long may teleport nearby another to hunt them instead.',
+                evidence: ['Ghost Writing', 'Paranormal Motion', 'EMF 5'],
+                ability: 'Can teleport nearby another player and target them instead at random if their current target is too far away.',
+                traits: ['Imitator']
+            },
+            {
+                name: 'Yōkai',
+                description: 'Yōkai are common Japanese spirits that can be found haunting nearly any location. Sensitive to electricity, they become agressive based on how much equipment is turned on.',
+                evidence: ['Fingerprints', 'Freezing Temperatures', 'Paranormal Motion'],
+                ability: 'They become faster and more likely to hunt the more electronic equipment is turned on.',
+                traits: ['Trickster']
+            },
+            {
+                name: 'Yurei',
+                description: 'A Yurei is a ghost that has returned to the physical world, usually for the purpose of acting out revenge, or a deep hatred.',
+                evidence: ['Freezing Temperatures', 'Ghost Writing', 'Ghost Orbs'],
+                ability: 'Drains sanity 25% faster.',
+                traits: ['Tormentor']
+            }
+        ];
+
+        // State
+        let selectedEvidence = [];
+        let selectedTraits = [];
+
+        // Initialize the app
+        function init() {
+            renderEvidenceGrid();
+            renderTraitsGrid();
+            updateResults();
+        }
+
+        // Render evidence selection grid
+        function renderEvidenceGrid() {
+            const grid = document.getElementById('evidenceGrid');
+            grid.innerHTML = '';
+
+            evidenceTypes.forEach(evidence => {
+                const isSelected = selectedEvidence.includes(evidence);
+                const item = document.createElement('div');
+                item.className = `checkbox-item ${isSelected ? 'selected' : ''}`;
+                item.onclick = () => toggleEvidence(evidence);
+                item.innerHTML = `
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} readonly>
+                    <span>${evidence}</span>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        // Render traits selection grid
+        function renderTraitsGrid() {
+            const grid = document.getElementById('traitsGrid');
+            grid.innerHTML = '';
+
+            Object.entries(traitDefinitions).forEach(([trait, description]) => {
+                const isSelected = selectedTraits.includes(trait);
+                const item = document.createElement('div');
+                item.className = `trait-item ${isSelected ? 'selected' : ''}`;
+                item.onclick = () => toggleTrait(trait);
+                item.innerHTML = `
+                    <div class="trait-name">${trait}</div>
+                    <div class="trait-desc">${description}</div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        // Toggle evidence selection
+        function toggleEvidence(evidence) {
+            if (selectedEvidence.includes(evidence)) {
+                selectedEvidence = selectedEvidence.filter(e => e !== evidence);
+            } else {
+                selectedEvidence.push(evidence);
+            }
+            renderEvidenceGrid();
+            updateResults();
+        }
+
+        // Toggle trait selection
+        function toggleTrait(trait) {
+            if (selectedTraits.includes(trait)) {
+                selectedTraits = selectedTraits.filter(t => t !== trait);
+            } else {
+                selectedTraits.push(trait);
+            }
+            renderTraitsGrid();
+            updateResults();
+        }
+
+        // Clear functions
+        function clearEvidence() {
+            selectedEvidence = [];
+            renderEvidenceGrid();
+            updateResults();
+        }
+
+        function clearTraits() {
+            selectedTraits = [];
+            renderTraitsGrid();
+            updateResults();
+        }
+
+        function clearAll() {
+            selectedEvidence = [];
+            selectedTraits = [];
+            renderEvidenceGrid();
+            renderTraitsGrid();
+            updateResults();
+        }
+
+        // Filter ghosts based on selected criteria
+        function getFilteredGhosts() {
+            return ghosts.filter(ghost => {
+                // Check evidence
+                const evidenceMatch = selectedEvidence.length === 0 || 
+                    selectedEvidence.every(evidence => ghost.evidence.includes(evidence));
+
+                // Check traits
+                const traitMatch = selectedTraits.length === 0 || 
+                    selectedTraits.every(trait => ghost.traits.includes(trait));
+
+                return evidenceMatch && traitMatch;
+            });
+        }
+
+        // Update results display
+        function updateResults() {
+            const filteredGhosts = getFilteredGhosts();
+            const ghostGrid = document.getElementById('ghostGrid');
+            const noResults = document.getElementById('noResults');
+            const summary = document.getElementById('resultsSummary');
+
+            // Update summary
+            let summaryText = `${filteredGhosts.length} ghost${filteredGhosts.length !== 1 ? 's' : ''} match${filteredGhosts.length === 1 ? 'es' : ''} your criteria`;
+            if (selectedEvidence.length > 0 || selectedTraits.length > 0) {
+                const criteria = [];
+                if (selectedEvidence.length > 0) criteria.push(`Evidence: ${selectedEvidence.join(', ')}`);
+                if (selectedTraits.length > 0) criteria.push(`Traits: ${selectedTraits.join(', ')}`);
+                summaryText += ` (${criteria.join(' | ')})`;
+            }
+            summary.textContent = summaryText;
+
+            // Show/hide results
+            if (filteredGhosts.length === 0 && (selectedEvidence.length > 0 || selectedTraits.length > 0)) {
+                ghostGrid.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                ghostGrid.style.display = 'grid';
+                noResults.style.display = 'none';
+
+                // Render ghost cards
+                ghostGrid.innerHTML = '';
+                filteredGhosts.forEach(ghost => {
+                    const card = document.createElement('div');
+                    card.className = 'ghost-card';
+                    card.innerHTML = createGhostCard(ghost);
+                    ghostGrid.appendChild(card);
+                });
+            }
+        }
+
+        // Create ghost card HTML
+        function createGhostCard(ghost) {
+            const evidenceTags = ghost.evidence.map(evidence => {
+                const isFound = selectedEvidence.includes(evidence);
+                return `<span class="evidence-tag ${isFound ? 'found' : 'not-found'}">${evidence}</span>`;
+            }).join('');
+
+            const traitBadges = ghost.traits.map(trait => {
+                const isSelected = selectedTraits.includes(trait);
+                return `
+                    <div class="trait-badge ${isSelected ? 'selected-trait' : ''}">
+                        <div class="trait-badge-name">${trait}</div>
+                        <div class="trait-badge-desc">${traitDefinitions[trait]}</div>
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <div class="ghost-content">
+                    <div>
+                        <div class="ghost-name">${ghost.name}</div>
+                        <div class="ghost-description">${ghost.description}</div>
+                        <div class="ghost-ability">
+                            <div class="ability-title">Special Ability:</div>
+                            <div class="ability-text">${ghost.ability}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="subsection-title">Evidence Required:</div>
+                        <div class="evidence-tags">
+                            ${evidenceTags}
+                        </div>
+                        <div class="subsection-title">Traits:</div>
+                        <div class="ghost-traits">
+                            ${traitBadges}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>
