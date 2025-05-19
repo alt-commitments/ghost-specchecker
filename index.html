@@ -108,6 +108,13 @@
             color: white;
         }
 
+        .checkbox-item.excluded {
+            border-color: #ef4444;
+            background: #ef4444;
+            color: white;
+            text-decoration: line-through;
+        }
+
         .checkbox-item input[type="checkbox"] {
             margin-right: 8px;
             width: 18px;
@@ -237,6 +244,12 @@
             color: #6b7280;
         }
 
+        .evidence-tag.excluded {
+            background: #ef4444;
+            color: white;
+            text-decoration: line-through;
+        }
+
         .ghost-traits {
             margin-top: 16px;
         }
@@ -297,6 +310,23 @@
             border-bottom: 1px solid #e5e7eb;
             margin: 16px 0;
         }
+
+        .evidence-controls {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        .evidence-controls span {
+            margin: 0 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .evidence-controls span:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -313,6 +343,10 @@
                 <button class="clear-btn" onclick="clearEvidence()">Clear Evidence</button>
             </div>
             <div class="grid evidence-grid" id="evidenceGrid"></div>
+            <div class="evidence-controls">
+                <span onclick="selectAllEvidence()">Select All</span> | 
+                <span onclick="excludeAllEvidence()">Exclude All</span>
+            </div>
 
             <div class="divider"></div>
 
@@ -550,6 +584,7 @@
 
         // State
         let selectedEvidence = [];
+        let excludedEvidence = [];
         let selectedTraits = [];
 
         // Initialize the app
@@ -566,9 +601,18 @@
 
             evidenceTypes.forEach(evidence => {
                 const isSelected = selectedEvidence.includes(evidence);
+                const isExcluded = excludedEvidence.includes(evidence);
                 const item = document.createElement('div');
-                item.className = `checkbox-item ${isSelected ? 'selected' : ''}`;
-                item.onclick = () => toggleEvidence(evidence);
+                
+                if (isSelected) {
+                    item.className = 'checkbox-item selected';
+                } else if (isExcluded) {
+                    item.className = 'checkbox-item excluded';
+                } else {
+                    item.className = 'checkbox-item';
+                }
+                
+                item.onclick = (e) => cycleEvidenceState(evidence, e.ctrlKey);
                 item.innerHTML = `
                     <input type="checkbox" ${isSelected ? 'checked' : ''} readonly>
                     <span>${evidence}</span>
@@ -595,13 +639,31 @@
             });
         }
 
-        // Toggle evidence selection
-        function toggleEvidence(evidence) {
-            if (selectedEvidence.includes(evidence)) {
-                selectedEvidence = selectedEvidence.filter(e => e !== evidence);
+        // Cycle through evidence states: unselected -> selected -> excluded -> unselected
+        function cycleEvidenceState(evidence, isCtrlKey) {
+            // If Ctrl key is pressed, just toggle between selected and unselected
+            if (isCtrlKey) {
+                if (selectedEvidence.includes(evidence)) {
+                    selectedEvidence = selectedEvidence.filter(e => e !== evidence);
+                } else {
+                    selectedEvidence.push(evidence);
+                    excludedEvidence = excludedEvidence.filter(e => e !== evidence);
+                }
             } else {
-                selectedEvidence.push(evidence);
+                // Normal cycling behavior
+                if (!selectedEvidence.includes(evidence) && !excludedEvidence.includes(evidence)) {
+                    // Currently unselected -> select it
+                    selectedEvidence.push(evidence);
+                } else if (selectedEvidence.includes(evidence)) {
+                    // Currently selected -> exclude it
+                    selectedEvidence = selectedEvidence.filter(e => e !== evidence);
+                    excludedEvidence.push(evidence);
+                } else {
+                    // Currently excluded -> unselect it
+                    excludedEvidence = excludedEvidence.filter(e => e !== evidence);
+                }
             }
+            
             renderEvidenceGrid();
             updateResults();
         }
@@ -617,9 +679,26 @@
             updateResults();
         }
 
+        // Select all evidence
+        function selectAllEvidence() {
+            selectedEvidence = [...evidenceTypes];
+            excludedEvidence = [];
+            renderEvidenceGrid();
+            updateResults();
+        }
+
+        // Exclude all evidence
+        function excludeAllEvidence() {
+            excludedEvidence = [...evidenceTypes];
+            selectedEvidence = [];
+            renderEvidenceGrid();
+            updateResults();
+        }
+
         // Clear functions
         function clearEvidence() {
             selectedEvidence = [];
+            excludedEvidence = [];
             renderEvidenceGrid();
             updateResults();
         }
@@ -632,6 +711,7 @@
 
         function clearAll() {
             selectedEvidence = [];
+            excludedEvidence = [];
             selectedTraits = [];
             renderEvidenceGrid();
             renderTraitsGrid();
@@ -641,15 +721,19 @@
         // Filter ghosts based on selected criteria
         function getFilteredGhosts() {
             return ghosts.filter(ghost => {
-                // Check evidence
+                // Check evidence - must contain all selected evidence
                 const evidenceMatch = selectedEvidence.length === 0 || 
                     selectedEvidence.every(evidence => ghost.evidence.includes(evidence));
+                
+                // Check excluded evidence - must not contain any excluded evidence
+                const excludedMatch = excludedEvidence.length === 0 ||
+                    !ghost.evidence.some(evidence => excludedEvidence.includes(evidence));
 
                 // Check traits
                 const traitMatch = selectedTraits.length === 0 || 
                     selectedTraits.every(trait => ghost.traits.includes(trait));
 
-                return evidenceMatch && traitMatch;
+                return evidenceMatch && excludedMatch && traitMatch;
             });
         }
 
@@ -662,16 +746,20 @@
 
             // Update summary
             let summaryText = `${filteredGhosts.length} ghost${filteredGhosts.length !== 1 ? 's' : ''} match${filteredGhosts.length === 1 ? 'es' : ''} your criteria`;
-            if (selectedEvidence.length > 0 || selectedTraits.length > 0) {
-                const criteria = [];
-                if (selectedEvidence.length > 0) criteria.push(`Evidence: ${selectedEvidence.join(', ')}`);
-                if (selectedTraits.length > 0) criteria.push(`Traits: ${selectedTraits.join(', ')}`);
+            
+            const criteria = [];
+            if (selectedEvidence.length > 0) criteria.push(`Found Evidence: ${selectedEvidence.join(', ')}`);
+            if (excludedEvidence.length > 0) criteria.push(`Ruled Out Evidence: ${excludedEvidence.join(', ')}`);
+            if (selectedTraits.length > 0) criteria.push(`Traits: ${selectedTraits.join(', ')}`);
+            
+            if (criteria.length > 0) {
                 summaryText += ` (${criteria.join(' | ')})`;
             }
+            
             summary.textContent = summaryText;
 
             // Show/hide results
-            if (filteredGhosts.length === 0 && (selectedEvidence.length > 0 || selectedTraits.length > 0)) {
+            if (filteredGhosts.length === 0 && (selectedEvidence.length > 0 || excludedEvidence.length > 0 || selectedTraits.length > 0)) {
                 ghostGrid.style.display = 'none';
                 noResults.style.display = 'block';
             } else {
@@ -692,8 +780,13 @@
         // Create ghost card HTML
         function createGhostCard(ghost) {
             const evidenceTags = ghost.evidence.map(evidence => {
-                const isFound = selectedEvidence.includes(evidence);
-                return `<span class="evidence-tag ${isFound ? 'found' : 'not-found'}">${evidence}</span>`;
+                if (selectedEvidence.includes(evidence)) {
+                    return `<span class="evidence-tag found">${evidence}</span>`;
+                } else if (excludedEvidence.includes(evidence)) {
+                    return `<span class="evidence-tag excluded">${evidence}</span>`;
+                } else {
+                    return `<span class="evidence-tag not-found">${evidence}</span>`;
+                }
             }).join('');
 
             const traitBadges = ghost.traits.map(trait => {
